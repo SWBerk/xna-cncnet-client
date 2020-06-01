@@ -71,11 +71,13 @@ namespace DTAClient.DXGUI.Multiplayer.CnCNet
         private GameCollection gameCollection;
 
         private Color cAdminNameColor;
+        private Color cfdNameColor;
 
         private Texture2D unknownGameIcon;
         private Texture2D adminGameIcon;
 
         private EnhancedSoundEffect sndGameCreated;
+        private EnhancedSoundEffect Ban; 
 
         private IRCColor[] chatColors;
 
@@ -111,7 +113,7 @@ namespace DTAClient.DXGUI.Multiplayer.CnCNet
                 WindowManager.RenderResolutionY - 64);
 
             Name = "CnCNetLobby";
-            BackgroundTexture = AssetLoader.LoadTexture("cncnetlobbybg.png");
+            BackgroundTexture = AssetLoader.LoadTexture("Dune2Klobbybg.png");
             localGameID = ClientConfiguration.Instance.LocalGame;
             localGame = gameCollection.GameList.Find(g => g.InternalName.ToUpper() == localGameID.ToUpper());
 
@@ -163,11 +165,11 @@ namespace DTAClient.DXGUI.Multiplayer.CnCNet
             playerContextMenu.ClientRectangle = new Rectangle(0, 0, 150, 2);
             playerContextMenu.Enabled = false;
             playerContextMenu.Visible = false;
-            playerContextMenu.AddItem("Private Message", () => 
+            playerContextMenu.AddItem("Private Message", () =>
                 PerformUserListContextMenuAction(iu => pmWindow.InitPM(iu.Name)));
-            playerContextMenu.AddItem("Add Friend", () => 
+            playerContextMenu.AddItem("Add Friend", () =>
                 PerformUserListContextMenuAction(iu => ToggleFriend(iu.Name)));
-            playerContextMenu.AddItem("Ignore User", () => 
+            playerContextMenu.AddItem("Ignore User", () =>
                 PerformUserListContextMenuAction(iu => ToggleIgnoreUser(iu.Ident)));
 
             lbChatMessages = new ChatListBox(WindowManager);
@@ -200,26 +202,7 @@ namespace DTAClient.DXGUI.Multiplayer.CnCNet
                 150, 21);
 
             chatColors = connectionManager.GetIRCColors();
-
-            foreach (IRCColor color in connectionManager.GetIRCColors())
-            {
-                if (!color.Selectable)
-                    continue;
-
-                XNADropDownItem ddItem = new XNADropDownItem();
-                ddItem.Text = color.Name;
-                ddItem.TextColor = color.XnaColor;
-                ddItem.Tag = color;
-
-                ddColor.AddItem(ddItem);
-            }
-
-            int selectedColor = UserINISettings.Instance.ChatColor;
-
-            ddColor.SelectedIndex = selectedColor >= ddColor.Items.Count || selectedColor < 0
-                ? ClientConfiguration.Instance.DefaultPersonalChatColorIndex:
-                selectedColor;
-            SetChatColor();
+            ResetAvailableChatColors(chatColors);
             ddColor.SelectedIndexChanged += DdColor_SelectedIndexChanged;
 
             ddCurrentChannel = new XNAClientDropDown(WindowManager);
@@ -278,6 +261,30 @@ namespace DTAClient.DXGUI.Multiplayer.CnCNet
             PostUIInit();
         }
 
+        private void ResetAvailableChatColors(IRCColor[] chatColors)
+        {
+            ddColor.Items.Clear();
+            foreach (IRCColor color in chatColors)
+            {
+                if (!color.Selectable)
+                    continue;
+
+                XNADropDownItem ddItem = new XNADropDownItem();
+                ddItem.Text = color.Name;
+                ddItem.TextColor = color.XnaColor;
+                ddItem.Tag = color;
+
+                ddColor.AddItem(ddItem);
+            }
+
+            int selectedColor = UserINISettings.Instance.ChatColor;
+
+            ddColor.SelectedIndex = selectedColor >= ddColor.Items.Count || selectedColor < 0
+                ? ClientConfiguration.Instance.DefaultPersonalChatColorIndex :
+                selectedColor;
+            SetChatColor();
+        }
+
         private void OnCnCNetGameCountUpdated(object sender, PlayerCountEventArgs e)
         {
             UpdateOnlineCount(e.PlayerCount);
@@ -311,7 +318,7 @@ namespace DTAClient.DXGUI.Multiplayer.CnCNet
                 if (chatChannel == null)
                 {
                     chatChannel = connectionManager.CreateChannel(game.UIName, game.ChatChannel,
-                        true, "ra1-derp");
+                        true, "1256874123698741");
                     connectionManager.AddChannel(chatChannel);
                 }
 
@@ -352,7 +359,9 @@ namespace DTAClient.DXGUI.Multiplayer.CnCNet
         private void PostUIInit()
         {
             sndGameCreated = new EnhancedSoundEffect("gamecreated.wav");
+            Ban = new EnhancedSoundEffect("Ban.wav");
 
+            cfdNameColor = AssetLoader.GetColorFromString(ClientConfiguration.Instance.fdNameColor);
             cAdminNameColor = AssetLoader.GetColorFromString(ClientConfiguration.Instance.AdminNameColor);
             unknownGameIcon = AssetLoader.TextureFromImage(ClientCore.Properties.Resources.unknownicon);
             adminGameIcon = AssetLoader.TextureFromImage(ClientCore.Properties.Resources.cncneticon);
@@ -373,7 +382,7 @@ namespace DTAClient.DXGUI.Multiplayer.CnCNet
             gameCreationPanel.Hide();
 
             connectionManager.MainChannel.AddMessage(new ChatMessage(Color.White, Renderer.GetSafeString(
-                    "*** DTA CnCNet Client version " +
+                    "*** Dune2K Client version " +
                     System.Windows.Forms.Application.ProductVersion + " ***", lbChatMessages.FontIndex)));
 
             connectionManager.BannedFromChannel += ConnectionManager_BannedFromChannel;
@@ -407,6 +416,12 @@ namespace DTAClient.DXGUI.Multiplayer.CnCNet
             GameProcessLogic.GameProcessExited += SharedUILogic_GameProcessExited;
         }
 
+        private void CurrentChatChannel_ChannelModesChanged(object sender, EventArgs e)
+        {
+            ResetAvailableChatColors(connectionManager.GetIRCColors());
+            RefreshPlayerList(sender, e);
+        }
+
         /// <summary>
         /// Displays a message when the IRC server has informed that the local user
         /// has been banned from a channel that they're attempting to join.
@@ -415,16 +430,14 @@ namespace DTAClient.DXGUI.Multiplayer.CnCNet
         {
             var game = lbGameList.HostedGames.Find(hg => ((HostedCnCNetGame)hg).ChannelName == e.ChannelName);
 
+            
+
             if (game == null)
             {
-                connectionManager.MainChannel.AddMessage(new ChatMessage(
-                    Color.White, "Cannot join channel " + e.ChannelName + ", you're banned!"));
+                XNAMessageBox.Show2(WindowManager, "Error joining Game", "You have been Banned! ");
+                SoundPlayer.Play(sndGameCreated);
             }
-            else
-            {
-                connectionManager.MainChannel.AddMessage(new ChatMessage(
-                    Color.White, "Cannot join game " + game.RoomName + ", you've been banned by the game host!"));
-            }
+           
 
             isJoiningGame = false;
             if (gameOfLastJoinAttempt != null)
@@ -756,6 +769,7 @@ namespace DTAClient.DXGUI.Multiplayer.CnCNet
 
         private void GameChannel_InvalidPasswordEntered_NewGame(object sender, EventArgs e)
         {
+            XNAMessageBox.Show(WindowManager, "Error joining Game", "Incorrect password! Please try again ");
             connectionManager.MainChannel.AddMessage(new ChatMessage(Color.White, "Incorrect password!"));
             ClearGameJoinAttempt((Channel)sender);
         }
@@ -953,7 +967,7 @@ namespace DTAClient.DXGUI.Multiplayer.CnCNet
             ddCurrentChannel.AllowDropDown = true;
             tbChatInput.Enabled = true;
 
-            Channel cncnetChannel = connectionManager.FindChannel("#cncnet");
+            Channel cncnetChannel = connectionManager.FindChannel("#SWGhost");
             cncnetChannel.Join();
             cncnetChannel.RequestUserInfo();
 
@@ -984,7 +998,7 @@ namespace DTAClient.DXGUI.Multiplayer.CnCNet
 
             if (chatChannelMissing || broadcastChannelMissing)
                 XNAMessageBox.Show(WindowManager, "Error joining channels", "Following problems were encountered " +
-                    "when attempting to join channels for the currently set local game " + localGameID +":" + Environment.NewLine + Environment.NewLine +
+                    "when attempting to join channels for the currently set local game Dune2K:" + Environment.NewLine + Environment.NewLine +
                     (chatChannelMissing ? "- Chat channel info could not be found. No chat channel will be available for this game in Current Channel dropdown." +
                     Environment.NewLine + Environment.NewLine : "") +
                     (broadcastChannelMissing ? "- Broadcast channel info could not be found. Creating & hosting games will be disabled." +
@@ -1022,8 +1036,9 @@ namespace DTAClient.DXGUI.Multiplayer.CnCNet
                 currentChatChannel.UserListReceived -= RefreshPlayerList;
                 currentChatChannel.MessageAdded -= CurrentChatChannel_MessageAdded;
                 currentChatChannel.UserGameIndexUpdated -= CurrentChatChannel_UserGameIndexUpdated;
+                currentChatChannel.ChannelModesChanged -= CurrentChatChannel_ChannelModesChanged;
 
-                if (currentChatChannel.ChannelName != "#cncnet" &&
+                if (currentChatChannel.ChannelName != "#SWGhost" &&
                     currentChatChannel.ChannelName != gameCollection.GetGameChatChannelNameFromIdentifier(localGameID))
                 {
                     // Remove the assigned channels from the users so we don't have ghost users on the PM user list
@@ -1042,6 +1057,7 @@ namespace DTAClient.DXGUI.Multiplayer.CnCNet
             currentChatChannel.UserListReceived += RefreshPlayerList;
             currentChatChannel.MessageAdded += CurrentChatChannel_MessageAdded;
             currentChatChannel.UserGameIndexUpdated += CurrentChatChannel_UserGameIndexUpdated;
+            currentChatChannel.ChannelModesChanged += CurrentChatChannel_ChannelModesChanged;
             connectionManager.SetMainChannel(currentChatChannel);
 
             lbPlayerList.TopIndex = 0;
@@ -1052,7 +1068,7 @@ namespace DTAClient.DXGUI.Multiplayer.CnCNet
 
             RefreshPlayerList(this, EventArgs.Empty);
 
-            if (currentChatChannel.ChannelName != "#cncnet" &&
+            if (currentChatChannel.ChannelName != "#SWGhost" &&
                 currentChatChannel.ChannelName != gameCollection.GetGameChatChannelNameFromIdentifier(localGameID))
             {
                 currentChatChannel.Join();
@@ -1308,7 +1324,7 @@ namespace DTAClient.DXGUI.Multiplayer.CnCNet
 
         public string GetSwitchName()
         {
-            return "CnCNet Lobby";
+            return "Dune2K Lobby";
         }
     }
 }

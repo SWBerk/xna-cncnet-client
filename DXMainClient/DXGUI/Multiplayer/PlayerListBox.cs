@@ -26,15 +26,19 @@ namespace DTAClient.DXGUI.Multiplayer
         private Texture2D badgeGameIcon;
         private Texture2D friendIcon;
         private Texture2D ignoreIcon;
+        private Texture2D ppGameIcon;
+        private Texture2D rricon;
 
         private GameCollection gameCollection;
 
         public PlayerListBox(WindowManager windowManager, GameCollection gameCollection) : base(windowManager)
         {
             this.gameCollection = gameCollection;
-            
+
             Users = new List<ChannelUser>();
 
+            ppGameIcon = AssetLoader.TextureFromImage(ClientCore.Properties.Resources.ppicon);
+            rricon = AssetLoader.TextureFromImage(ClientCore.Properties.Resources.rricon);
             adminGameIcon = AssetLoader.TextureFromImage(ClientCore.Properties.Resources.cncneticon);
             unknownGameIcon = AssetLoader.TextureFromImage(ClientCore.Properties.Resources.unknownicon);
             friendIcon = AssetLoader.LoadTexture("friendicon.png");
@@ -86,13 +90,13 @@ namespace DTAClient.DXGUI.Multiplayer
 
                     FillRectangle(new Rectangle(1, height,
                         drawnWidth, lbItem.TextLines.Count * LineHeight),
-                        FocusColor);
+                        GetColorWithAlpha(FocusColor));
                 }
-
-                DrawTexture(user.IsAdmin ? adminGameIcon : lbItem.Texture, new Rectangle(x, height,
-                        adminGameIcon.Width, adminGameIcon.Height), Color.White);
+                DrawTexture(user.IsAdmin && user.IRCUser.GameID < 0 || user.IRCUser.GameID >= gameCollection.GameList.Count ? unknownGameIcon : lbItem.Texture, new Rectangle(x, height,
+                       unknownGameIcon.Width, unknownGameIcon.Height), Color.White);
 
                 x += adminGameIcon.Width + MARGIN;
+
 
                 // Friend Icon
                 if (user.IRCUser.IsFriend)
@@ -103,6 +107,15 @@ namespace DTAClient.DXGUI.Multiplayer
 
                     x += friendIcon.Width + MARGIN;
                 }
+                // Voice
+                else if (user.isvoice)
+                {
+                    DrawTexture(ignoreIcon,
+                        new Rectangle(x, height,
+                        ignoreIcon.Width, ignoreIcon.Height), Color.White);
+
+                    x += ignoreIcon.Width + MARGIN;
+                }
                 // Ignore Icon
                 else if (user.IRCUser.IsIgnored && !user.IsAdmin)
                 {
@@ -112,6 +125,41 @@ namespace DTAClient.DXGUI.Multiplayer
 
                     x += ignoreIcon.Width + MARGIN;
                 }
+                else if (user.IsAdmin)
+                    if (user.IsAdmin && user.IRCUser.GameID < 0 || user.IRCUser.GameID >= gameCollection.GameList.Count)
+                    {
+                        x += ppGameIcon.Width + MARGIN + 130;
+                        DrawTexture(ppGameIcon,
+                            new Rectangle(x, height,
+                            ppGameIcon.Width, ppGameIcon.Height), Color.White);
+
+                        x += ppGameIcon.Width + MARGIN - 165;
+
+
+                    }
+                else
+                {
+                    x += ppGameIcon.Width + MARGIN + 130;
+                    DrawTexture(rricon,
+                        new Rectangle(x, height,
+                        ppGameIcon.Width, ppGameIcon.Height), Color.White);
+
+                    x += rricon.Width + MARGIN - 165;
+
+
+                }
+                else if (user.IRCUser.GameID < 0 || user.IRCUser.GameID >= gameCollection.GameList.Count)
+                {
+                    x += ppGameIcon.Width + MARGIN + 130;
+                    DrawTexture(ppGameIcon,
+                        new Rectangle(x, height,
+                        ppGameIcon.Width, ppGameIcon.Height), Color.White);
+
+                    x += ppGameIcon.Width + MARGIN - 165;
+
+
+                }
+
 
                 // Badge Icon - coming soon
                 /*
@@ -123,12 +171,13 @@ namespace DTAClient.DXGUI.Multiplayer
                 */
 
                 // Player Name
-                string name = user.IsAdmin ? user.IRCUser.Name + " (Admin)" : user.IRCUser.Name;
+                string name = user.IRCUser.GameID < 0 || user.IRCUser.GameID >= gameCollection.GameList.Count ? user.IRCUser.Name + " (Admin)" : user.IRCUser.Name;
                 x += lbItem.TextXPadding;
 
                 DrawStringWithShadow(name, FontIndex,
                     new Vector2(x, height),
-                    user.IsAdmin ? Color.Red : lbItem.TextColor);
+                    user.IRCUser.GameID < 0 || user.IRCUser.GameID >= gameCollection.GameList.Count ? Color.Red : lbItem.TextColor);
+
 
                 height += LineHeight;
             }
@@ -143,12 +192,13 @@ namespace DTAClient.DXGUI.Multiplayer
         {
             item.Tag = user;
 
-            if (user.IsAdmin)
+            if (user.IsAdmin && user.IRCUser.GameID < 0 || user.IRCUser.GameID >= gameCollection.GameList.Count)
             {
                 item.Text = user.IRCUser.Name + " (Admin)";
                 item.TextColor = Color.Red;
                 item.Texture = adminGameIcon;
             }
+
             else
             {
                 item.Text = user.IRCUser.Name;

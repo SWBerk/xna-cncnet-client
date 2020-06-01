@@ -45,7 +45,7 @@ namespace DTAConfig
             tabControl.AddTab("Display", 92);
             tabControl.AddTab("Audio", 92);
             tabControl.AddTab("Game", 92);
-            tabControl.AddTab("CnCNet", 92);
+            tabControl.AddTab("Dune2K", 92);
             tabControl.AddTab("Updater", 92);
             tabControl.AddTab("Components", 92);
             tabControl.SelectedIndexChanged += TabControl_SelectedIndexChanged;
@@ -143,14 +143,12 @@ namespace DTAConfig
                 return;
             }
 
-            WindowManager.SoundPlayer.SetVolume(Convert.ToSingle(UserINISettings.Instance.ClientVolume));
             Disable();
         }
 
         private void ExitDownloadCancelConfirmation_YesClicked(XNAMessageBox messageBox)
         {
             componentsPanel.CancelAllDownloads();
-            WindowManager.SoundPlayer.SetVolume(Convert.ToSingle(UserINISettings.Instance.ClientVolume));
             Disable();
         }
 
@@ -235,14 +233,6 @@ namespace DTAConfig
             componentsPanel.Open();
 
             Enable();
-        }
-
-        public void ToggleMainMenuOnlyOptions(bool enable)
-        {
-            foreach (var panel in optionsPanels)
-            {
-                panel.ToggleMainMenuOnlyOptions(enable);
-            }
         }
 
         public void SwitchToCustomComponentsPanel()

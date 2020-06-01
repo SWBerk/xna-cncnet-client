@@ -1,9 +1,11 @@
 ﻿using ClientCore;
+using ClientGUI;
 using DTAClient.Online.EventArguments;
 using Microsoft.Xna.Framework;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+
 
 namespace DTAClient.Online
 {
@@ -24,15 +26,16 @@ namespace DTAClient.Online
         public event EventHandler<ChannelCTCPEventArgs> CTCPReceived;
         public event EventHandler InvalidPasswordEntered;
         public event EventHandler InviteOnlyErrorOnJoin;
+   
 
         /// <summary>
-        /// Raised when the server informs the client that it's is unable to
+        /// Raised when the server informs the client that it's is unable to 
         /// join the channel because it's full.
         /// </summary>
         public event EventHandler ChannelFull;
 
         /// <summary>
-        /// Raised when the server informs the client that it's is unable to
+        /// Raised when the server informs the client that it's is unable to 
         /// join the channel because the client has attempted to join too many
         /// channels too quickly.
         /// </summary>
@@ -48,7 +51,7 @@ namespace DTAClient.Online
 
             if (persistent)
             {
-                Instance_SettingsSaved(null, EventArgs.Empty);
+                notifyOnUserListChange = UserINISettings.Instance.NotifyOnUserListChange;
                 UserINISettings.Instance.SettingsSaved += Instance_SettingsSaved;
             }
         }
@@ -73,7 +76,7 @@ namespace DTAClient.Online
             {
                 _topic = value;
                 if (Persistent)
-                    AddMessage(new ChatMessage("Topic for " + UIName + " is: " + _topic));
+                    AddMessage(new ChatMessage("Dune2K MESSAGE(S) OF THE DAY : " + _topic));
             }
         }
 
@@ -89,23 +92,22 @@ namespace DTAClient.Online
             get { return users; }
         }
 
+        public object WindowManager { get; private set; }
+
         #endregion
 
         bool notifyOnUserListChange = true;
 
         private void Instance_SettingsSaved(object sender, EventArgs e)
         {
-#if YR
-            notifyOnUserListChange = false;
-#else
             notifyOnUserListChange = UserINISettings.Instance.NotifyOnUserListChange;
-#endif
         }
 
         public void AddUser(ChannelUser user)
         {
             users.Add(user);
             users = users.OrderBy(u => u.IRCUser.Name).OrderBy(u => !u.IsAdmin).ToList();
+            users = users.OrderBy(u => u.IRCUser.Name).OrderBy(u => !u.issuperadmin).ToList();
             UserAdded?.Invoke(this, new ChannelUserEventArgs(-1, user));
         }
 
@@ -126,15 +128,18 @@ namespace DTAClient.Online
                 var existingUser = users.Find(u => u.IRCUser.Name == user.IRCUser.Name);
                 if (existingUser == null)
                     users.Add(user);
-                else
+                else 
                     existingUser.IsAdmin = user.IsAdmin;
+              
+
             }
 
             users = users.OrderBy(u => u.IRCUser.Name).OrderBy(u => !u.IsAdmin).ToList();
+            users = users.OrderBy(u => u.IRCUser.Name).OrderBy(u => !u.issuperadmin).ToList();
             UserListReceived?.Invoke(this, EventArgs.Empty);
         }
 
-        public void OnUserKicked(string userName)
+        public void OnUserKicked(string userName, string kickReason)
         {
             int index = users.FindIndex(u => u.IRCUser.Name == userName);
 
@@ -152,9 +157,11 @@ namespace DTAClient.Online
                 users.RemoveAt(index);
             }
 
-            AddMessage(new ChatMessage(userName + " has been kicked from " + UIName + "."));
+            AddMessage(new ChatMessage(userName + " has been kicked  from " + UIName + ". " + "(" + kickReason + ")"));
+
 
             UserKicked?.Invoke(this, new UserNameIndexEventArgs(index, userName));
+
         }
 
         public void OnUserLeft(string userName)
@@ -182,7 +189,7 @@ namespace DTAClient.Online
 
             if (notifyOnUserListChange)
             {
-                AddMessage(new ChatMessage(userName + " has quit from CnCNet."));
+                AddMessage(new ChatMessage(userName + " has quit from Dune2K."));
             }
 
             users.RemoveAt(index);
@@ -246,7 +253,7 @@ namespace DTAClient.Online
             string colorString = ((char)03).ToString() + color.IrcColorId.ToString("D2");
 
             connection.QueueMessage(QueuedMessageType.CHAT_MESSAGE, 0,
-                "PRIVMSG " + ChannelName + " :" + colorString + message);
+       "PRIVMSG " + ChannelName + " :" + colorString + message);
         }
 
         public void SendCTCPMessage(string message, QueuedMessageType qmType, int priority)
@@ -254,7 +261,7 @@ namespace DTAClient.Online
             char CTCPChar1 = (char)58;
             char CTCPChar2 = (char)01;
 
-            connection.QueueMessage(qmType, priority,
+            connection.QueueMessage(qmType, priority, 
                 "NOTICE " + ChannelName + " " + CTCPChar1 + CTCPChar2 + message + CTCPChar2);
         }
 
@@ -281,23 +288,10 @@ namespace DTAClient.Online
 
         public void Join()
         {
-            // Wait a random amount of time before joining to prevent join/part floods
-            if (Persistent)
-            {
-                int rn = connection.Rng.Next(1, 10000);
-
-                if (string.IsNullOrEmpty(Password))
-                    connection.QueueMessage(QueuedMessageType.SYSTEM_MESSAGE, 9, rn, "JOIN " + ChannelName);
-                else
-                    connection.QueueMessage(QueuedMessageType.SYSTEM_MESSAGE, 9, rn, "JOIN " + ChannelName + " " + Password);
-            }
+            if (string.IsNullOrEmpty(Password))
+                connection.QueueMessage(QueuedMessageType.SYSTEM_MESSAGE, 9, "JOIN " + ChannelName);
             else
-            {
-                if (string.IsNullOrEmpty(Password))
-                    connection.QueueMessage(QueuedMessageType.SYSTEM_MESSAGE, 9, "JOIN " + ChannelName);
-                else
-                    connection.QueueMessage(QueuedMessageType.SYSTEM_MESSAGE, 9, "JOIN " + ChannelName + " " + Password);
-            }
+                connection.QueueMessage(QueuedMessageType.SYSTEM_MESSAGE, 9, "JOIN " + ChannelName + " " + Password);
         }
 
         public void RequestUserInfo()
@@ -307,16 +301,7 @@ namespace DTAClient.Online
 
         public void Leave()
         {
-            // Wait a random amount of time before joining to prevent join/part floods
-            if (Persistent)
-            {
-                int rn = connection.Rng.Next(1, 10000);
-                connection.QueueMessage(QueuedMessageType.SYSTEM_MESSAGE, 9, rn, "PART " + ChannelName);
-            }
-            else
-            {
-                connection.QueueMessage(QueuedMessageType.SYSTEM_MESSAGE, 9, "PART " + ChannelName);
-            }
+            connection.QueueMessage(QueuedMessageType.SYSTEM_MESSAGE, 9, "PART " + ChannelName);
             ClearUsers();
         }
 

@@ -119,7 +119,18 @@ namespace ClientCore.Properties {
                 return ((System.Drawing.Bitmap)(obj));
             }
         }
-        
+
+
+
+        public static System.Drawing.Bitmap Medal
+        {
+            get
+            {
+                object obj = ResourceManager.GetObject("Medal", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+
         /// <summary>
         ///   Looks up a localized string similar to [Video]
         ///Video.Windowed=false
@@ -180,6 +191,8 @@ namespace ClientCore.Properties {
                 return ((System.Drawing.Bitmap)(obj));
             }
         }
+
+
         
         /// <summary>
         ///   Looks up a localized resource of type System.Drawing.Bitmap.

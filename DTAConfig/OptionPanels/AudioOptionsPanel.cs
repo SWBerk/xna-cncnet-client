@@ -15,21 +15,21 @@ namespace DTAConfig.OptionPanels
         {
         }
 
-        private XNATrackbar trbScoreVolume;
-        private XNATrackbar trbSoundVolume;
-        private XNATrackbar trbVoiceVolume;
+        XNATrackbar trbScoreVolume;
+        XNATrackbar trbSoundVolume;
+        XNATrackbar trbVoiceVolume;
 
-        private XNALabel lblScoreVolumeValue;
-        private XNALabel lblSoundVolumeValue;
-        private XNALabel lblVoiceVolumeValue;
+        XNALabel lblScoreVolumeValue;
+        XNALabel lblSoundVolumeValue;
+        XNALabel lblVoiceVolumeValue;
 
-        private XNAClientCheckBox chkScoreShuffle;
+        XNAClientCheckBox chkScoreShuffle;
 
-        private XNALabel lblClientVolumeValue;
-        private XNATrackbar trbClientVolume;
+        XNALabel lblClientVolumeValue;
+        XNATrackbar trbClientVolume;
 
-        private XNAClientCheckBox chkMainMenuMusic;
-        private XNAClientCheckBox chkStopMusicOnMenu;
+        XNAClientCheckBox chkMainMenuMusic;
+        XNAClientCheckBox chkStopMusicOnMenu;
 
         public override void Initialize()
         {
@@ -180,6 +180,10 @@ namespace DTAConfig.OptionPanels
             AddChild(chkMainMenuMusic);
             AddChild(chkStopMusicOnMenu);
 
+            lblScoreVolumeValue.Text = trbScoreVolume.Value.ToString();
+            lblSoundVolumeValue.Text = trbSoundVolume.Value.ToString();
+            lblVoiceVolumeValue.Text = trbVoiceVolume.Value.ToString();
+            lblClientVolumeValue.Text = trbClientVolume.Value.ToString();
             WindowManager.SoundPlayer.SetVolume(trbClientVolume.Value / 10.0f);
         }
 

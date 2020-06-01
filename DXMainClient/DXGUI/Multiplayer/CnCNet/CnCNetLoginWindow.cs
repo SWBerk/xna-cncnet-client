@@ -35,7 +35,7 @@ namespace DTAClient.DXGUI.Multiplayer.CnCNet
             lblConnectToCnCNet = new XNALabel(WindowManager);
             lblConnectToCnCNet.Name = "lblConnectToCnCNet";
             lblConnectToCnCNet.FontIndex = 1;
-            lblConnectToCnCNet.Text = "CONNECT TO CNCNET";
+            lblConnectToCnCNet.Text = "CONNECT TO Dune2K";
 
             AddChild(lblConnectToCnCNet);
             lblConnectToCnCNet.CenterOnParent();
@@ -67,7 +67,7 @@ namespace DTAClient.DXGUI.Multiplayer.CnCNet
             chkPersistentMode = new XNAClientCheckBox(WindowManager);
             chkPersistentMode.Name = "chkPersistentMode";
             chkPersistentMode.ClientRectangle = new Rectangle(12, chkRememberMe.Bottom + 30, 0, 0);
-            chkPersistentMode.Text = "Stay connected outside of the CnCNet lobby";
+            chkPersistentMode.Text = "Stay connected outside of the Dune2K lobby";
             chkPersistentMode.TextPadding = chkRememberMe.TextPadding;
             chkPersistentMode.CheckedChanged += ChkPersistentMode_CheckedChanged;
 

@@ -45,7 +45,7 @@ namespace DTAClient.Online
 
         void OnChannelModesChanged(string userName, string channelName, string modeString, List<string> modeParameters);
 
-        void OnUserKicked(string channelName, string userName);
+        void OnUserKicked(string channelName, string userName, string kickReason);
 
         void OnErrorReceived(string errorMessage);
 

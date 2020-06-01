@@ -123,7 +123,7 @@ namespace DTAClient
 
                 foreach (var proc in searcher.Get())
                 {
-                    cpu = cpu + proc["Name"].ToString().Trim() + " (" + proc["NumberOfCores"] + " cores) ";
+                    cpu = cpu + proc["Name"] + " (" + proc["NumberOfCores"] + " cores) ";
                 }
 
                 searcher = new ManagementObjectSearcher("SELECT * FROM Win32_VideoController");
@@ -135,7 +135,7 @@ namespace DTAClient
                     if (currentBitsPerPixel != null && description != null)
                     {
                         if (currentBitsPerPixel.Value != null)
-                            videoController = videoController + "Video controller: " + description.Value.ToString().Trim() + " ";
+                            videoController = videoController + "Video controller: " + description.Value.ToString() + " ";
                     }
                 }
 
@@ -195,18 +195,15 @@ namespace DTAClient
 
                 RegistryKey key;
                 key = Registry.CurrentUser.CreateSubKey("SOFTWARE\\" + ClientConfiguration.Instance.InstallationPathRegKey);
-                string str = rn.Next(Int32.MaxValue - 1).ToString();
-
-                try {
-                    Object o = key.GetValue("Ident");
-                    if (o == null)
-                    {
-                        key.SetValue("Ident", str);
-                    }
-                    else
-                        str = o.ToString();
+                string str;
+                Object o = key.GetValue("Ident");
+                if (o == null)
+                {
+                    str = rn.Next(Int32.MaxValue - 1).ToString();
+                    key.SetValue("Ident", str);
                 }
-                catch { }
+                else
+                    str = o.ToString();
 
                 key.Close();
                 Connection.SetId(str);

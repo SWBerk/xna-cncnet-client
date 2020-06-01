@@ -1,10 +1,20 @@
 ﻿using Microsoft.Xna.Framework;
 using System;
+using System.Collections.Generic;
 
 namespace DTAClient.Online
 {
     public class ChatMessage
     {
+        internal static Dictionary<Color, Color> adminColorRemap = new Dictionary<Color, Color>()
+        {
+            // TODO: Add Color remapping here
+            // Sample:
+            [Color.White] = Color.Gray // Replaces all white admin messages with gray messages
+        };
+
+        private readonly Color color;
+
         /// <summary>
         /// Creates a new ChatMessage instance.
         /// </summary>
@@ -15,7 +25,7 @@ namespace DTAClient.Online
         public ChatMessage(string senderName, Color color, DateTime dateTime, string message)
         {
             SenderName = senderName;
-            Color = color;
+            this.color = color;
             DateTime = dateTime;
             Message = message;
         }
@@ -60,7 +70,16 @@ namespace DTAClient.Online
 
         public string SenderName { get; private set; }
         public string SenderIdent { get; private set; }
-        public Color Color { get; private set; }
+        public Color Color
+        {
+            get
+            {
+                var color = this.color;
+                if (SenderIsAdmin)
+                    _ = adminColorRemap.TryGetValue(color, out color);
+                return color;
+            }
+        }
         public DateTime DateTime { get; private set; }
         public string Message { get; private set; }
         public bool SenderIsAdmin { get; private set; }

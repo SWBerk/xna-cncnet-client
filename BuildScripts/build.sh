@@ -6,7 +6,7 @@ function build()
     platform=$1
     configuration=$2
 
-    xbuild ../DXClient.sln /t:Rebuild /p:Platform=$platform /p:Configuration=$configuration
+    msbuild ../DXClient.sln /t:Rebuild /p:Platform=$platform /p:Configuration=$configuration
 }
 
 function copyCompiled()
@@ -51,7 +51,6 @@ function copyCompiled()
     cp ../References/Ionic.Zip.dll ../Compiled${arg}/Binaries/
     cp ../References/MapThumbnailExtractor.dll ../Compiled${arg}/Binaries/
     cp ../References/Rampastring.Tools.dll ../Compiled${arg}/Binaries/
-    cp ../References/DiscordRPC.dll ../Compiled${arg}/Binaries/
 }
 
 

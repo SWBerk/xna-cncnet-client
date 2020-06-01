@@ -27,7 +27,6 @@ namespace DTAConfig.OptionPanels
         XNAClientCheckBox chkSkipLoginWindow;
         XNAClientCheckBox chkPersistentMode;
         XNAClientCheckBox chkConnectOnStartup;
-        XNAClientCheckBox chkDiscordIntegration;
 
         GameCollection gameCollection;
 
@@ -37,12 +36,12 @@ namespace DTAConfig.OptionPanels
         {
             base.Initialize();
 
-            Name = "CnCNetOptionsPanel";
+            Name = "Dune2KOptionsPanel";
 
             chkPingUnofficialTunnels = new XNAClientCheckBox(WindowManager);
             chkPingUnofficialTunnels.Name = "chkPingUnofficialTunnels";
             chkPingUnofficialTunnels.ClientRectangle = new Rectangle(12, 12, 0, 0);
-            chkPingUnofficialTunnels.Text = "Ping unofficial CnCNet tunnels";
+            chkPingUnofficialTunnels.Text = "Ping unofficial Dune2K tunnels";
 
             AddChild(chkPingUnofficialTunnels);
 
@@ -53,7 +52,7 @@ namespace DTAConfig.OptionPanels
                 chkPingUnofficialTunnels.Bottom + 12, 0, 0);
             chkWriteInstallPathToRegistry.Text = "Write game installation path to Windows" + Environment.NewLine +
                 "Registry (makes it possible to join" + Environment.NewLine +
-                 "other games' game rooms on CnCNet)";
+                 "other games' game rooms on Dune2K)";
 
             AddChild(chkWriteInstallPathToRegistry);
 
@@ -72,7 +71,7 @@ namespace DTAConfig.OptionPanels
                 chkPingUnofficialTunnels.X,
                 chkPlaySoundOnGameHosted.Bottom + 12, 0, 0);
             chkNotifyOnUserListChange.Text = "Show player join / quit messages" + Environment.NewLine +
-                "on CnCNet lobby";
+                "on Dune2K lobby";
 
             AddChild(chkNotifyOnUserListChange);
 
@@ -91,7 +90,7 @@ namespace DTAConfig.OptionPanels
             chkPersistentMode.ClientRectangle = new Rectangle(
                 chkSkipLoginWindow.X,
                 chkSkipLoginWindow.Bottom + 12, 0, 0);
-            chkPersistentMode.Text = "Stay connected outside of the CnCNet lobby";
+            chkPersistentMode.Text = "Stay connected outside of the Dune2K lobby";
             chkPersistentMode.CheckedChanged += ChkPersistentMode_CheckedChanged;
 
             AddChild(chkPersistentMode);
@@ -105,25 +104,6 @@ namespace DTAConfig.OptionPanels
             chkConnectOnStartup.AllowChecking = false;
 
             AddChild(chkConnectOnStartup);
-
-            chkDiscordIntegration = new XNAClientCheckBox(WindowManager);
-            chkDiscordIntegration.Name = "chkDiscordIntegration";
-            chkDiscordIntegration.ClientRectangle = new Rectangle(
-                chkSkipLoginWindow.X,
-                chkConnectOnStartup.Bottom + 12, 0, 0);
-            chkDiscordIntegration.Text = "Show detailed game info in Discord status";
-            
-            if (String.IsNullOrEmpty(ClientConfiguration.Instance.DiscordAppId))
-            {
-                chkDiscordIntegration.AllowChecking = false;
-                chkDiscordIntegration.Checked = false;
-            }
-            else
-            {
-                chkDiscordIntegration.AllowChecking = true;
-            }
-
-            AddChild(chkDiscordIntegration);
 
             var lblFollowedGames = new XNALabel(WindowManager);
             lblFollowedGames.Name = "lblFollowedGames";
@@ -209,9 +189,6 @@ namespace DTAConfig.OptionPanels
             chkSkipLoginWindow.Checked = IniSettings.SkipConnectDialog;
             chkPersistentMode.Checked = IniSettings.PersistentMode;
 
-            chkDiscordIntegration.Checked = !String.IsNullOrEmpty(ClientConfiguration.Instance.DiscordAppId)
-                && IniSettings.DiscordIntegration;
-
             string localGame = ClientConfiguration.Instance.LocalGame;
 
             foreach (var chkBox in followedGameChks)
@@ -230,7 +207,7 @@ namespace DTAConfig.OptionPanels
 
         public override bool Save()
         {
-            bool restartRequired = base.Save();
+            base.Save();
 
             IniSettings.PingUnofficialCnCNetTunnels.Value = chkPingUnofficialTunnels.Checked;
             IniSettings.WritePathToRegistry.Value = chkWriteInstallPathToRegistry.Checked;
@@ -240,18 +217,12 @@ namespace DTAConfig.OptionPanels
             IniSettings.SkipConnectDialog.Value = chkSkipLoginWindow.Checked;
             IniSettings.PersistentMode.Value = chkPersistentMode.Checked;
 
-            if (!String.IsNullOrEmpty(ClientConfiguration.Instance.DiscordAppId))
-            {
-                restartRequired = IniSettings.DiscordIntegration != chkDiscordIntegration.Checked;
-                IniSettings.DiscordIntegration.Value = chkDiscordIntegration.Checked;
-            }
-
             foreach (var chkBox in followedGameChks)
             {
                 IniSettings.SettingsIni.SetBooleanValue("Channels", chkBox.Name, chkBox.Checked);
             }
 
-            return restartRequired;
+            return false;
         }
     }
 }

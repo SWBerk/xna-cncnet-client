@@ -70,19 +70,7 @@ namespace DTAClient.DXGUI.Generic
 
         private XNAMessageBox firstRunMessageBox;
 
-        private bool _updateInProgress;
-        private bool UpdateInProgress
-        {
-            get { return _updateInProgress; }
-            set 
-            {
-                _updateInProgress = value;
-                topBar.SetSwitchButtonsClickable(!_updateInProgress);
-                topBar.SetOptionsButtonClickable(!_updateInProgress);
-                SetButtonHotkeys(!_updateInProgress);
-            }
-        }
-
+        private bool updateInProgress = false;
         private bool customComponentDialogQueued = false;
 
         private DateTime lastUpdateCheckTime;
@@ -95,19 +83,9 @@ namespace DTAClient.DXGUI.Generic
 
         private readonly bool isMediaPlayerAvailable;
 
-        private CancellationTokenSource cncnetPlayerCountCancellationSource;
+        private float musicVolume = 1.0f;
 
-        // Main Menu Buttons
-        private XNAClientButton btnNewCampaign;
-        private XNAClientButton btnLoadGame;
-        private XNAClientButton btnSkirmish;
-        private XNAClientButton btnCnCNet;
-        private XNAClientButton btnLan;
-        private XNAClientButton btnOptions;
-        private XNAClientButton btnMapEditor;
-        private XNAClientButton btnStatistics;
-        private XNAClientButton btnCredits;
-        private XNAClientButton btnExtras;
+        private CancellationTokenSource cncnetPlayerCountCancellationSource;
 
         /// <summary>
         /// Initializes the main menu's controls.
@@ -122,75 +100,85 @@ namespace DTAClient.DXGUI.Generic
 
             WindowManager.CenterControlOnScreen(this);
 
-            btnNewCampaign = new XNAClientButton(WindowManager);
+            var btnNewCampaign = new XNAClientButton(WindowManager);
             btnNewCampaign.Name = "btnNewCampaign";
             btnNewCampaign.IdleTexture = AssetLoader.LoadTexture("MainMenu\\campaign.png");
             btnNewCampaign.HoverTexture = AssetLoader.LoadTexture("MainMenu\\campaign_c.png");
             btnNewCampaign.HoverSoundEffect = new EnhancedSoundEffect("MainMenu\\button.wav");
             btnNewCampaign.LeftClick += BtnNewCampaign_LeftClick;
+            btnNewCampaign.HotKey = Keys.C;
 
-            btnLoadGame = new XNAClientButton(WindowManager);
+            var btnLoadGame = new XNAClientButton(WindowManager);
             btnLoadGame.Name = "btnLoadGame";
             btnLoadGame.IdleTexture = AssetLoader.LoadTexture("MainMenu\\loadmission.png");
             btnLoadGame.HoverTexture = AssetLoader.LoadTexture("MainMenu\\loadmission_c.png");
             btnLoadGame.HoverSoundEffect = new EnhancedSoundEffect("MainMenu\\button.wav");
             btnLoadGame.LeftClick += BtnLoadGame_LeftClick;
+            btnLoadGame.HotKey = Keys.L;
 
-            btnSkirmish = new XNAClientButton(WindowManager);
+            var btnSkirmish = new XNAClientButton(WindowManager);
             btnSkirmish.Name = "btnSkirmish";
             btnSkirmish.IdleTexture = AssetLoader.LoadTexture("MainMenu\\skirmish.png");
             btnSkirmish.HoverTexture = AssetLoader.LoadTexture("MainMenu\\skirmish_c.png");
             btnSkirmish.HoverSoundEffect = new EnhancedSoundEffect("MainMenu\\button.wav");
             btnSkirmish.LeftClick += BtnSkirmish_LeftClick;
+            btnSkirmish.HotKey = Keys.S;
 
-            btnCnCNet = new XNAClientButton(WindowManager);
+            var btnCnCNet = new XNAClientButton(WindowManager);
             btnCnCNet.Name = "btnCnCNet";
             btnCnCNet.IdleTexture = AssetLoader.LoadTexture("MainMenu\\cncnet.png");
             btnCnCNet.HoverTexture = AssetLoader.LoadTexture("MainMenu\\cncnet_c.png");
             btnCnCNet.HoverSoundEffect = new EnhancedSoundEffect("MainMenu\\button.wav");
             btnCnCNet.LeftClick += BtnCnCNet_LeftClick;
+            btnCnCNet.HotKey = Keys.M;
 
-            btnLan = new XNAClientButton(WindowManager);
+            var btnLan = new XNAClientButton(WindowManager);
             btnLan.Name = "btnLan";
             btnLan.IdleTexture = AssetLoader.LoadTexture("MainMenu\\lan.png");
             btnLan.HoverTexture = AssetLoader.LoadTexture("MainMenu\\lan_c.png");
             btnLan.HoverSoundEffect = new EnhancedSoundEffect("MainMenu\\button.wav");
             btnLan.LeftClick += BtnLan_LeftClick;
+            btnLan.HotKey = Keys.N;
 
-            btnOptions = new XNAClientButton(WindowManager);
+            var btnOptions = new XNAClientButton(WindowManager);
             btnOptions.Name = "btnOptions";
             btnOptions.IdleTexture = AssetLoader.LoadTexture("MainMenu\\options.png");
             btnOptions.HoverTexture = AssetLoader.LoadTexture("MainMenu\\options_c.png");
             btnOptions.HoverSoundEffect = new EnhancedSoundEffect("MainMenu\\button.wav");
             btnOptions.LeftClick += BtnOptions_LeftClick;
+            btnOptions.HotKey = Keys.O;
 
-            btnMapEditor = new XNAClientButton(WindowManager);
+            var btnMapEditor = new XNAClientButton(WindowManager);
             btnMapEditor.Name = "btnMapEditor";
             btnMapEditor.IdleTexture = AssetLoader.LoadTexture("MainMenu\\mapeditor.png");
             btnMapEditor.HoverTexture = AssetLoader.LoadTexture("MainMenu\\mapeditor_c.png");
             btnMapEditor.HoverSoundEffect = new EnhancedSoundEffect("MainMenu\\button.wav");
             btnMapEditor.LeftClick += BtnMapEditor_LeftClick;
+            btnMapEditor.HotKey = Keys.E;
 
-            btnStatistics = new XNAClientButton(WindowManager);
+            var btnStatistics = new XNAClientButton(WindowManager);
             btnStatistics.Name = "btnStatistics";
             btnStatistics.IdleTexture = AssetLoader.LoadTexture("MainMenu\\statistics.png");
             btnStatistics.HoverTexture = AssetLoader.LoadTexture("MainMenu\\statistics_c.png");
             btnStatistics.HoverSoundEffect = new EnhancedSoundEffect("MainMenu\\button.wav");
             btnStatistics.LeftClick += BtnStatistics_LeftClick;
+            btnStatistics.HotKey = Keys.T;
 
-            btnCredits = new XNAClientButton(WindowManager);
+            var btnCredits = new XNAClientButton(WindowManager);
             btnCredits.Name = "btnCredits";
             btnCredits.IdleTexture = AssetLoader.LoadTexture("MainMenu\\credits.png");
             btnCredits.HoverTexture = AssetLoader.LoadTexture("MainMenu\\credits_c.png");
             btnCredits.HoverSoundEffect = new EnhancedSoundEffect("MainMenu\\button.wav");
             btnCredits.LeftClick += BtnCredits_LeftClick;
+            btnCredits.HotKey = Keys.R;
 
-            btnExtras = new XNAClientButton(WindowManager);
+            var btnExtras = new XNAClientButton(WindowManager);
             btnExtras.Name = "btnExtras";
             btnExtras.IdleTexture = AssetLoader.LoadTexture("MainMenu\\extras.png");
             btnExtras.HoverTexture = AssetLoader.LoadTexture("MainMenu\\extras_c.png");
             btnExtras.HoverSoundEffect = new EnhancedSoundEffect("MainMenu\\button.wav");
             btnExtras.LeftClick += BtnExtras_LeftClick;
+            btnExtras.HotKey = Keys.E;
 
             var btnExit = new XNAClientButton(WindowManager);
             btnExit.Name = "btnExit";
@@ -243,16 +231,14 @@ namespace DTAClient.DXGUI.Generic
                 CUpdater.OnCustomComponentsOutdated += CUpdater_OnCustomComponentsOutdated;
             }
 
-            base.Initialize(); // Read control attributes from INI
-
             innerPanel = new MainMenuDarkeningPanel(WindowManager, discordHandler);
             innerPanel.ClientRectangle = new Rectangle(0, 0,
                 Width,
                 Height);
-            innerPanel.DrawOrder = int.MaxValue;
-            innerPanel.UpdateOrder = int.MaxValue;
             AddChild(innerPanel);
             innerPanel.Hide();
+
+            base.Initialize(); // Read control attributes from INI
 
             lblVersion.Text = CUpdater.GameVersion;
 
@@ -266,9 +252,7 @@ namespace DTAClient.DXGUI.Generic
             this.ClientRectangle = new Rectangle((WindowManager.RenderResolutionX - Width) / 2,
                 (WindowManager.RenderResolutionY - Height) / 2,
                 Width, Height);
-            innerPanel.ClientRectangle = new Rectangle(0, 0, 
-                Math.Max(WindowManager.RenderResolutionX, Width),
-                Math.Max(WindowManager.RenderResolutionY, Height));
+            innerPanel.ClientRectangle = new Rectangle(0, 0, WindowManager.RenderResolutionX, WindowManager.RenderResolutionY);
 
             CnCNetPlayerCountTask.CnCNetGameCountUpdated += CnCNetInfoController_CnCNetGameCountUpdated;
             cncnetPlayerCountCancellationSource = new CancellationTokenSource();
@@ -288,41 +272,6 @@ namespace DTAClient.DXGUI.Generic
             UserINISettings.Instance.SettingsSaved += SettingsSaved;
 
             CUpdater.Restart += CUpdater_Restart;
-
-            SetButtonHotkeys(true);
-        }
-
-        private void SetButtonHotkeys(bool enableHotkeys)
-        {
-            if (!Initialized)
-                return;
-
-            if (enableHotkeys)
-            {
-                btnNewCampaign.HotKey = Keys.C;
-                btnLoadGame.HotKey = Keys.L;
-                btnSkirmish.HotKey = Keys.S;
-                btnCnCNet.HotKey = Keys.M;
-                btnLan.HotKey = Keys.N;
-                btnOptions.HotKey = Keys.O;
-                btnMapEditor.HotKey = Keys.E;
-                btnStatistics.HotKey = Keys.T;
-                btnCredits.HotKey = Keys.R;
-                btnExtras.HotKey = Keys.X;
-            }
-            else
-            {
-                btnNewCampaign.HotKey = Keys.None;
-                btnLoadGame.HotKey = Keys.None;
-                btnSkirmish.HotKey = Keys.None;
-                btnCnCNet.HotKey = Keys.None;
-                btnLan.HotKey = Keys.None;
-                btnOptions.HotKey = Keys.None;
-                btnMapEditor.HotKey = Keys.None;
-                btnStatistics.HotKey = Keys.None;
-                btnCredits.HotKey = Keys.None;
-                btnExtras.HotKey = Keys.None;
-            }
         }
 
         private void OptionsWindow_EnabledChanged(object sender, EventArgs e)
@@ -365,6 +314,8 @@ namespace DTAClient.DXGUI.Generic
         /// </summary>
         private void SettingsSaved(object sender, EventArgs e)
         {
+            musicVolume = (float)UserINISettings.Instance.ClientVolume;
+
             if (isMediaPlayerAvailable)
             {
                 if (MediaPlayer.State == MediaState.Playing)
@@ -469,7 +420,7 @@ namespace DTAClient.DXGUI.Generic
 
             if (cncnetPlayerCountCancellationSource != null) cncnetPlayerCountCancellationSource.Cancel();
             topBar.Clean();
-            if (UpdateInProgress)
+            if (updateInProgress)
                 CUpdater.TerminateUpdate = true;
 
             if (connectionManager.IsConnected)
@@ -510,7 +461,7 @@ namespace DTAClient.DXGUI.Generic
             lblUpdateStatus.Text = "Updating failed! Click to retry.";
             lblUpdateStatus.DrawUnderline = true;
             lblUpdateStatus.Enabled = true;
-            UpdateInProgress = false;
+            updateInProgress = false;
 
             innerPanel.Show(null); // Darkening
             XNAMessageBox msgBox = new XNAMessageBox(WindowManager, "Update failed",
@@ -535,7 +486,7 @@ namespace DTAClient.DXGUI.Generic
             lblUpdateStatus.Text = "The update was cancelled. Click to retry.";
             lblUpdateStatus.DrawUnderline = true;
             lblUpdateStatus.Enabled = true;
-            UpdateInProgress = false;
+            updateInProgress = false;
         }
 
         private void UpdateWindow_UpdateCompleted(object sender, EventArgs e)
@@ -543,7 +494,7 @@ namespace DTAClient.DXGUI.Generic
             innerPanel.Hide();
             lblUpdateStatus.Text = MainClientConstants.GAME_NAME_SHORT + " was succesfully updated to v." + CUpdater.GameVersion;
             lblVersion.Text = CUpdater.GameVersion;
-            UpdateInProgress = false;
+            updateInProgress = false;
             lblUpdateStatus.Enabled = true;
             lblUpdateStatus.DrawUnderline = false;
         }
@@ -568,7 +519,7 @@ namespace DTAClient.DXGUI.Generic
 
         private void ForceUpdate()
         {
-            UpdateInProgress = true;
+            updateInProgress = true;
             innerPanel.Hide();
             innerPanel.UpdateWindow.ForceUpdate();
             innerPanel.Show(innerPanel.UpdateWindow);
@@ -601,7 +552,7 @@ namespace DTAClient.DXGUI.Generic
         /// </summary>
         private void HandleFileIdentifierUpdate()
         {
-            if (UpdateInProgress)
+            if (updateInProgress)
             {
                 return;
             }
@@ -636,7 +587,7 @@ namespace DTAClient.DXGUI.Generic
             if (innerPanel.UpdateQueryWindow.Visible)
                 return;
 
-            if (UpdateInProgress)
+            if (updateInProgress)
                 return;
 
             if ((firstRunMessageBox != null && firstRunMessageBox.Visible) || optionsWindow.Enabled)
@@ -683,7 +634,7 @@ namespace DTAClient.DXGUI.Generic
             innerPanel.UpdateWindow.SetData(CUpdater.ServerGameVersion);
             innerPanel.Show(innerPanel.UpdateWindow);
             lblUpdateStatus.Text = "Updating...";
-            UpdateInProgress = true;
+            updateInProgress = true;
             CUpdater.StartAsyncUpdate();
         }
 
@@ -813,7 +764,7 @@ namespace DTAClient.DXGUI.Generic
             {
                 isMusicFading = false;
                 MediaPlayer.IsRepeating = true;
-                MediaPlayer.Volume = (float)UserINISettings.Instance.ClientVolume;
+                MediaPlayer.Volume = musicVolume;
                 try
                 {
                     MediaPlayer.Play(themeSong);
@@ -858,11 +809,9 @@ namespace DTAClient.DXGUI.Generic
                 return;
             }
 
-            float step = MEDIA_PLAYER_VOLUME_EXIT_FADE_STEP * (float)UserINISettings.Instance.ClientVolume;
-
-            if (MediaPlayer.Volume > step)
+            if (MediaPlayer.Volume > MEDIA_PLAYER_VOLUME_EXIT_FADE_STEP * musicVolume)
             {
-                MediaPlayer.Volume -= step;
+                MediaPlayer.Volume -= MEDIA_PLAYER_VOLUME_EXIT_FADE_STEP * musicVolume;
                 AddCallback(new Action(FadeMusicExit), null);
             }
             else

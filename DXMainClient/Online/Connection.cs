@@ -3,10 +3,7 @@ using Rampastring.Tools;
 using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Net;
-using System.Net.Security;
 using System.Net.Sockets;
-using System.Security.Cryptography.X509Certificates;
 using System.Text;
 using System.Threading;
 
@@ -33,6 +30,8 @@ namespace DTAClient.Online
         /// </summary>
         private static readonly IList<Server> Servers = new List<Server>
         {
+
+            
             new Server("irc.gamesurge.net", "GameSurge", new int[1] { 6667 }),
             new Server("Burstfire.UK.EU.GameSurge.net", "GameSurge London, UK", new int[3] { 6667, 6668, 7000 }),
             new Server("ColoCrossing.IL.US.GameSurge.net", "GameSurge Chicago, IL", new int[5] { 6660, 6666, 6667, 6668, 6669 }),
@@ -63,16 +62,10 @@ namespace DTAClient.Online
             get { return _attemptingConnection; }
         }
 
-        Random _rng = new Random();
-        public Random Rng
-        {
-            get { return _rng; }
-        }
-
         private List<QueuedMessage> MessageQueue = new List<QueuedMessage>();
         private TimeSpan MessageQueueDelay;
 
-        private Stream serverStream;
+        private NetworkStream serverStream;
         private TcpClient tcpClient;
 
         volatile int reconnectCount = 0;
@@ -199,11 +192,7 @@ namespace DTAClient.Online
                             sendQueueHandler.Start();
 
                             tcpClient = client;
-                            var netStream = tcpClient.GetStream();
-                            if (server.UseSsl)
-                                serverStream = GetWrappedSslStream(server.Host, netStream);
-                            else
-                                serverStream = netStream;
+                            serverStream = tcpClient.GetStream();
                             serverStream.ReadTimeout = 1000;
 
                             currentConnectedServerId = serverId;
@@ -218,51 +207,11 @@ namespace DTAClient.Online
                 }
             }
 
-            Logger.Log("Connecting to CnCNet failed!");
+            Logger.Log("Connecting to Dune2K failed!");
             // Clear the failed server list in case connecting to all servers has failed
             failedServerIds.Clear();
             _attemptingConnection = false;
             connectionManager.OnConnectAttemptFailed();
-        }
-
-        private SslStream GetWrappedSslStream(string hostname, NetworkStream networkStream)
-        {
-            var certValidation = ServicePointManager.ServerCertificateValidationCallback;
-            if (certValidation is null)
-                certValidation = delegate (object sender, X509Certificate certificate, X509Chain chain, SslPolicyErrors sslPolicyErrors)
-                {
-                    if (sslPolicyErrors == SslPolicyErrors.None)
-                    {
-                        return true;
-                    }
-                    Logger.Log("Connected server failed certificate validation: " + sslPolicyErrors);
-                    return false;
-                };
-            
-            bool certValidationWithIrcAsSender(object sender, X509Certificate certificate, X509Chain chain, SslPolicyErrors sslPolicyErrors)
-            {
-                return certValidation(this, certificate, chain, sslPolicyErrors);
-            }
-            X509Certificate selectionCallback(object sender, string targetHost, X509CertificateCollection localCertificates, X509Certificate remoteCertificate, string[] acceptableIssuers)
-            {
-                return localCertificates?.Count > 0 ? localCertificates[0] : null;
-            }
-
-            var sslStream = new SslStream(networkStream, 
-                leaveInnerStreamOpen: false,
-                certValidationWithIrcAsSender,
-                selectionCallback);
-            try
-            {
-                sslStream.AuthenticateAsClient(hostname);
-            }
-            catch (IOException)
-            {
-                Logger.Log("Failed to establish SSL communication channel to: " + hostname);
-                throw;
-            }
-
-            return sslStream;
         }
 
         private void HandleComm(object client)
@@ -299,7 +248,7 @@ namespace DTAClient.Online
 
                     if (errorTimes > 30) // TODO Figure out if this hacky check is actually necessary
                     {
-                        Logger.Log("Disconnected from CnCNet due to a socket error. Message: " + ex.Message);
+                        Logger.Log("Disconnected from Dune2K due to a socket error. Message: " + ex.Message);
                         failedServerIds.Add(currentConnectedServerId);
                         connectionManager.OnConnectionLost(ex.Message);
                         break;
@@ -321,7 +270,7 @@ namespace DTAClient.Online
                     if (errorTimes > 30) // TODO Figure out if this hacky check is actually necessary
                     {
                         failedServerIds.Add(currentConnectedServerId);
-                        Logger.Log("Disconnected from CnCNet.");
+                        Logger.Log("Disconnected from Dune2K.");
                         connectionManager.OnConnectionLost("Server disconnected.");
                         break;
                     }
@@ -366,7 +315,7 @@ namespace DTAClient.Online
                     return;
                 }
 
-                Logger.Log("Attempting to reconnect to CnCNet.");
+                Logger.Log("Attempting to reconnect to Dune2K.");
                 connectionManager.OnReconnectAttempt();
             }
         }
@@ -617,7 +566,10 @@ namespace DTAClient.Online
                     case "KICK":
                         string kickChannelName = parameters[0];
                         string kickUserName = parameters[1];
-                        connectionManager.OnUserKicked(kickChannelName, kickUserName);
+                        string kickReason = parameters.Count > 2
+                            ? parameters[2]
+                            : null;
+                        connectionManager.OnUserKicked(kickChannelName, kickUserName, kickReason);
                         break;
                     case "ERROR":
                         connectionManager.OnErrorReceived(message);
@@ -734,27 +686,10 @@ namespace DTAClient.Online
 
                 lock (messageQueueLocker)
                 {
-                    for (int i = 0; i < MessageQueue.Count; i++)
+                    if (MessageQueue.Count > 0)
                     {
-                        QueuedMessage qm = MessageQueue[i];
-                        if (qm.Delay > 0)
-                        {
-                            if (qm.SendAt < DateTime.Now)
-                            {
-                                message = qm.Command;
-
-                                Logger.Log("Delayed message sent: " + qm.ID);
-
-                                MessageQueue.RemoveAt(i);
-                                break;
-                            }
-                        }
-                        else
-                        {
-                            message = qm.Command;
-                            MessageQueue.RemoveAt(i);
-                            break;
-                        }
+                        message = MessageQueue[0].Command;
+                        MessageQueue.RemoveAt(0);
                     }
                 }
 
@@ -817,13 +752,6 @@ namespace DTAClient.Online
             QueueMessage(qm);
         }
 
-        public void QueueMessage(QueuedMessageType type, int priority, int delay, string message)
-        {
-            QueuedMessage qm = new QueuedMessage(message, type, priority, delay);
-            QueueMessage(qm);
-            Logger.Log("Setting delay to " + delay + "ms for " + qm.ID);
-        }
-
         /// <summary>
         /// Send a message to the CnCNet server.
         /// </summary>
@@ -850,7 +778,6 @@ namespace DTAClient.Online
             }
         }
 
-        private int NextQueueID { get; set; } = 0;
         /// <summary>
         /// Adds a message to the send queue.
         /// </summary>
@@ -859,8 +786,6 @@ namespace DTAClient.Online
         {
             if (!_isConnected)
                 return;
-
-            qm.ID = NextQueueID++;
 
             lock (messageQueueLocker)
             {
@@ -902,8 +827,6 @@ namespace DTAClient.Online
         private void AddSpecialQueuedMessage(QueuedMessage qm)
         {
             int broadcastingMessageIndex = MessageQueue.FindIndex(m => m.MessageType == qm.MessageType);
-
-            qm.ID = NextQueueID++;
 
             if (broadcastingMessageIndex > -1)
             {

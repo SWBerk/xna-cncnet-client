@@ -1,6 +1,6 @@
 ﻿using ClientCore;
 using ClientCore.CnCNet5;
-using DTAClient.Domain.Multiplayer.CnCNet;
+using ClientGUI;
 using DTAClient.Online.EventArguments;
 using Microsoft.Xna.Framework;
 using Rampastring.Tools;
@@ -54,25 +54,28 @@ namespace DTAClient.Online
 
             cDefaultChatColor = AssetLoader.GetColorFromString(ClientConfiguration.Instance.DefaultChatColor);
 
-            ircChatColors = new IRCColor[]
+            allChatColors = new IRCColor[] // All known IRC colors
             {
                 new IRCColor("Default color", false, cDefaultChatColor, 0),
-                new IRCColor("Default color #2", false, cDefaultChatColor, 1),
-                new IRCColor("Light Blue", true, Color.LightBlue, 2),
+                new IRCColor("LightPink", true, Color.LightPink, 2),
                 new IRCColor("Green", true, Color.ForestGreen, 3),
-                new IRCColor("Dark Red", true, new Color(180, 0, 0, 255), 4),
-                new IRCColor("Red", true, Color.Red, 5),
-                new IRCColor("Purple", true, Color.MediumOrchid, 6),
+                new IRCColor("Red", true, new Color(180, 0, 0, 255), 4),
+                new IRCColor("Brown", true, Color.Brown, 5),
                 new IRCColor("Orange", true, Color.Orange, 7),
                 new IRCColor("Yellow", true, Color.Yellow, 8),
                 new IRCColor("Lime Green", true, Color.Lime, 9),
-                new IRCColor("Turquoise", true, Color.Turquoise, 10),
-                new IRCColor("Sky Blue", true, Color.LightSkyBlue, 11),
+                new IRCColor("Light Yellow", true, Color.NavajoWhite, 10),
+                new IRCColor("Light Blue", true, Color.LightSkyBlue, 11),
                 new IRCColor("Blue", true, Color.RoyalBlue, 12),
-                new IRCColor("Pink", true, Color.Fuchsia, 13),
-                new IRCColor("Gray", true, Color.LightGray, 14),
-                new IRCColor("Gray #2", false, Color.Gray, 15)
+                new IRCColor("Gray", true, Color.Gray, 15),
+                new IRCColor("white", true, Color.LightGray, 14),
+                new IRCColor("Pink", true, Color.Fuchsia, 13),               
+                new IRCColor("Sky Blue", true, Color.Cyan, 1),
+                new IRCColor("Purple", true, Color.MediumOrchid, 6),
+
+
             };
+            limitedChatColors = allChatColors.Take(12).ToArray(); // Limit to the first 12 colors
         }
 
         public Channel MainChannel { get; private set; }
@@ -105,11 +108,13 @@ namespace DTAClient.Online
         private GameCollection gameCollection;
 
         private Color cDefaultChatColor;
-        private IRCColor[] ircChatColors;
+        private IRCColor[] limitedChatColors;
+        private IRCColor[] allChatColors;
 
         private WindowManager wm;
 
         private bool disconnect = false;
+        private EnhancedSoundEffect sndGameCreated;
 
         public bool IsCnCNetInitialized()
         {
@@ -147,10 +152,35 @@ namespace DTAClient.Online
             channels.Remove(channel);
         }
 
+        public IRCUser GetPlayerIrcUser()
+        {
+            return UserList.FirstOrDefault(u => u.Name == ProgramConstants.PLAYERNAME);
+        }
+
+        public ChannelUser GetPlayerUserInChannel(Channel ch)
+        {
+            if (ch == null)
+                return null;
+            var meUser = GetPlayerIrcUser();
+            return ch.Users.FirstOrDefault(u => u.IRCUser.Name == meUser?.Name);
+        }
+
         public IRCColor[] GetIRCColors()
         {
-            return ircChatColors;
+            // TODO: figure out if we (i.e. the current user) is an admin
+            bool isAdmin = false;
+            if (IsConnected)
+            {
+                // Find ourselves
+                var meIrcUser = GetPlayerUserInChannel(MainChannel);
+                if (meIrcUser != null)
+                    isAdmin = meIrcUser.IsAdmin;
+            }
+
+            return isAdmin ? allChatColors : limitedChatColors;
         }
+
+        public IRCColor[] GetAllIRCColors() => allChatColors;
 
         public void LeaveFromChannel(Channel channel)
         {
@@ -336,7 +366,7 @@ namespace DTAClient.Online
                 {
                     if (message.Length < 3)
                     {
-                        foreColor = cDefaultChatColor;
+                        foreColor = Color.White;
                     }
                     else
                     {
@@ -344,15 +374,39 @@ namespace DTAClient.Online
                         message = message.Remove(0, 3);
                         int colorIndex = Conversions.IntFromString(colorString, -1);
                         // Try to parse message color info; if fails, use default color
-                        if (colorIndex < ircChatColors.Length && colorIndex > -1)
-                            foreColor = ircChatColors[colorIndex].XnaColor;
+                        // use all known colors here, since the message was received.
+                        var chatColors = allChatColors;
+                        if (colorIndex < chatColors.Length && colorIndex > -1)
+                            foreColor = chatColors[colorIndex].XnaColor;
                         else
-                            foreColor = cDefaultChatColor;
+                            foreColor = Color.White;
                     }
                 }
                 else
-                    foreColor = cDefaultChatColor;
+                   if (message.Length < 3)
+                {
+                    foreColor = Color.White;
+                }
+                else
+                {
+                    string colorString = message.Substring(1, 2);
+                    message = message.Remove(0, 3);
+                    int colorIndex = Conversions.IntFromString(colorString, -1);
+                    // Try to parse message color info; if fails, use default color
+                    // use all known colors here, since the message was received.
+                    var chatColors = allChatColors;
+                    if (colorIndex < chatColors.Length && colorIndex > -1)
+                        foreColor = chatColors[colorIndex].XnaColor;
+                    else
+                        foreColor = Color.White;
+                }
             }
+            if (message.Contains(Convert.ToString((char)031)))
+
+                if (message.Length < 3)
+                {
+                    foreColor = cDefaultChatColor;
+                }
 
             if (message.Length > 1 && message[message.Length - 1] == '\u001f')
                 message = message.Remove(message.Length - 1);
@@ -388,7 +442,7 @@ namespace DTAClient.Online
         {
             ConnectAttemptFailed?.Invoke(this, EventArgs.Empty);
 
-            MainChannel.AddMessage(new ChatMessage(Color.Red, "Connecting to CnCNet failed!"));
+            MainChannel.AddMessage(new ChatMessage(Color.Red, "Connecting to Dune2K failed!"));
         }
 
         public void OnConnected()
@@ -400,7 +454,7 @@ namespace DTAClient.Online
         {
             connected = true;
             Connected?.Invoke(this, EventArgs.Empty);
-            MainChannel.AddMessage(new ChatMessage("Connection to CnCNet established."));
+            MainChannel.AddMessage(new ChatMessage("Connection to Dune2K established."));
         }
 
         /// <summary>
@@ -431,7 +485,7 @@ namespace DTAClient.Online
 
             UserList.Clear();
 
-            MainChannel.AddMessage(new ChatMessage(Color.Red, "Connection to CnCNet has been lost."));
+            MainChannel.AddMessage(new ChatMessage(Color.Red, "Connection to Dune2K has been lost."));
             connected = false;
         }
 
@@ -450,7 +504,7 @@ namespace DTAClient.Online
         public void Connect()
         {
             disconnect = false;
-            MainChannel.AddMessage(new ChatMessage("Connecting to CnCNet..."));
+            MainChannel.AddMessage(new ChatMessage("Connecting to Dune2K..."));
             connection.ConnectAsync();
         }
 
@@ -477,7 +531,7 @@ namespace DTAClient.Online
                 }
             }
 
-            MainChannel.AddMessage(new ChatMessage("You have disconnected from CnCNet."));
+            MainChannel.AddMessage(new ChatMessage("You have disconnected from Dune2K."));
             connected = false;
 
             UserList.Clear();
@@ -539,7 +593,7 @@ namespace DTAClient.Online
         {
             ReconnectAttempt?.Invoke(this, EventArgs.Empty);
 
-            MainChannel.AddMessage(new ChatMessage("Attempting to reconnect to CnCNet..."));
+            MainChannel.AddMessage(new ChatMessage("Attempting to reconnect to Dune2K..."));
 
             connection.ConnectAsync();
         }
@@ -556,7 +610,7 @@ namespace DTAClient.Online
 
             if (channel == null)
                 return;
-
+           
             bool isAdmin = false;
             string name = userName;
 
@@ -565,6 +619,7 @@ namespace DTAClient.Online
                 isAdmin = true;
                 name = userName.Remove(0, 1);
             }
+            
 
             IRCUser ircUser = null;
 
@@ -610,25 +665,30 @@ namespace DTAClient.Online
             UserAdded?.Invoke(this, new UserEventArgs(user));
         }
 
-        public void OnUserKicked(string channelName, string userName)
+        public void OnUserKicked(string channelName, string userName, string kickReason)
         {
-            wm.AddCallback(new Action<string, string>(DoUserKicked),
-                channelName, userName);
+            wm.AddCallback(new Action<string, string, string>(DoUserKicked),
+                channelName, userName, kickReason);
+            SoundPlayer.Play(sndGameCreated);
         }
 
-        private void DoUserKicked(string channelName, string userName)
+        private void DoUserKicked(string channelName, string userName, string kickReason)
         {
+            
             Channel channel = FindChannel(channelName);
 
             if (channel == null)
                 return;
 
-            channel.OnUserKicked(userName);
+           
+            channel.OnUserKicked(userName, kickReason);
 
             if (userName == ProgramConstants.PLAYERNAME)
             {
+                XNAMessageBox.Show2(wm, "Error ", "You have been Kicked! " + "(" + kickReason + ")");
                 foreach (ChannelUser user in channel.Users)
                 {
+                    
                     RemoveChannelFromUser(user.IRCUser.Name, channelName);
                 }
 
@@ -717,15 +777,24 @@ namespace DTAClient.Online
             {
                 string name = userName;
                 bool isAdmin = false;
+                bool isFancy = false;
+                bool isvoice = false;
 
                 if (userName.StartsWith("@"))
                 {
                     isAdmin = true;
                     name = userName.Substring(1);
                 }
-                else if (userName.StartsWith("+"))
+                else if (userName.StartsWith("&"))
+                {
+                    isFancy = true;
                     name = userName.Substring(1);
-
+                }
+                else if (userName.StartsWith("+"))
+                {
+                    isvoice = true;
+                    name = userName.Substring(1);
+                }
                 // Check if we already know the IRC user from another channel
                 IRCUser ircUser = UserList.Find(u => u.Name == name);
 
@@ -739,6 +808,8 @@ namespace DTAClient.Online
 
                 var channelUser = new ChannelUser(ircUser);
                 channelUser.IsAdmin = isAdmin;
+                channelUser.IsFancy = isFancy;
+                channelUser.isvoice = isvoice; 
 
                 channelUserList.Add(channelUser);
             }

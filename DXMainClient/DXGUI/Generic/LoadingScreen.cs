@@ -81,7 +81,7 @@ namespace DTAClient.DXGUI.Generic
                 "N/A" : CUpdater.GameVersion;
 
             DiscordHandler discordHandler = null;
-            if (!string.IsNullOrEmpty(ClientConfiguration.Instance.DiscordAppId) && UserINISettings.Instance.DiscordIntegration)
+            if (!string.IsNullOrEmpty(ClientConfiguration.Instance.DiscordAppId))
                 discordHandler = new DiscordHandler(WindowManager);
 
             var gameCollection = new GameCollection();
@@ -155,11 +155,6 @@ namespace DTAClient.DXGUI.Generic
                 NameValidator.IsNameValid(ProgramConstants.PLAYERNAME) == null)
             {
                 cncnetManager.Connect();
-            }
-
-            if (!UserINISettings.Instance.PrivacyPolicyAccepted)
-            {
-                WindowManager.AddAndInitializeControl(new PrivacyNotification(WindowManager));
             }
 
             WindowManager.RemoveControl(this);

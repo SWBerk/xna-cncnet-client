@@ -87,7 +87,7 @@ namespace DTAClient.DXGUI.Multiplayer.GameLobby
             AddChatBoxCommand(new ChatBoxCommand("TUNNELINFO",
                 "View tunnel server information", false, PrintTunnelServerInformation));
             AddChatBoxCommand(new ChatBoxCommand("CHANGETUNNEL",
-                "Change the used CnCNet tunnel server (game host only)",
+                "Change the used Dune2K tunnel server (game host only)",
                 true, (s) => ShowTunnelSelectionWindow("Select tunnel server:")));
         }
 
@@ -347,7 +347,7 @@ namespace DTAClient.DXGUI.Multiplayer.GameLobby
             if (discordHandler == null)
                 return;
 
-            PlayerInfo player = FindLocalPlayer();
+            PlayerInfo player = Players.Find(p => p.Name == ProgramConstants.PLAYERNAME);
             if (player == null || Map == null || GameMode == null)
                 return;
             string side = "";
@@ -547,9 +547,9 @@ namespace DTAClient.DXGUI.Multiplayer.GameLobby
                 if (playerPorts.Count < Players.Count)
                 {
                     ShowTunnelSelectionWindow("An error occured while contacting " +
-                        "the CnCNet tunnel server." + Environment.NewLine + 
+                        "the Dune2K tunnel server." + Environment.NewLine + 
                         "Try picking a different tunnel server:");
-                    AddNotice("An error occured while contacting the specified CnCNet " +
+                    AddNotice("An error occured while contacting the specified Dune2K " +
                         "tunnel server. Please try using a different tunnel server " +
                         "(accessible by typing /CHANGETUNNEL in the chat box).", ERROR_MESSAGE_COLOR);
                     return;
@@ -1210,7 +1210,7 @@ namespace DTAClient.DXGUI.Multiplayer.GameLobby
             iniFile.SetIntValue("Settings", "GameID", UniqueGameID);
             iniFile.SetBooleanValue("Settings", "Host", IsHost);
 
-            PlayerInfo localPlayer = FindLocalPlayer();
+            PlayerInfo localPlayer = Players.Find(p => p.Name == ProgramConstants.PLAYERNAME);
 
             if (localPlayer == null)
                 return;
@@ -1674,9 +1674,6 @@ namespace DTAClient.DXGUI.Multiplayer.GameLobby
             Channel broadcastChannel = connectionManager.FindChannel(gameCollection.GetGameBroadcastingChannelNameFromIdentifier(localGame));
 
             if (broadcastChannel == null)
-                return;
-
-            if (ProgramConstants.IsInGame && broadcastChannel.Users.Count > 500)
                 return;
 
             if (GameMode == null || Map == null)

@@ -27,17 +27,12 @@ namespace ClientGUI
             masterControl.MouseMove += MasterControl_MouseMove;
             masterControl.EnabledChanged += MasterControl_EnabledChanged;
             InputEnabled = false;
-            DrawOrder = int.MaxValue;
-            GetParentWindow(masterControl.Parent).AddChild(this);
+            DrawOrder = int.MinValue;
+            // TODO: adding tool tips as root-level controls might be CPU-intensive.
+            // instead we could find out the root-level parent and only have the tooltip
+            // in the window manager's list when the root-level parent is visible.
+            WindowManager.AddControl(this);
             Visible = false;
-        }
-
-        private XNAWindow GetParentWindow(XNAControl parent)
-        {
-            if (parent is XNAWindow)
-                return parent as XNAWindow;
-            else
-                return GetParentWindow(parent.Parent);
         }
 
         private void MasterControl_EnabledChanged(object sender, EventArgs e)
@@ -128,13 +123,22 @@ namespace ClientGUI
         public override void Draw(GameTime gameTime)
         {
             Renderer.FillRectangle(ClientRectangle,
-                UISettings.ActiveSettings.BackgroundColor * Alpha);
+                ColorFromAlpha(UISettings.ActiveSettings.BackgroundColor));
             Renderer.DrawRectangle(ClientRectangle,
-                UISettings.ActiveSettings.AltColor * Alpha);
+                ColorFromAlpha(UISettings.ActiveSettings.AltColor));
             Renderer.DrawString(Text, ClientConfiguration.Instance.ToolTipFontIndex,
                 new Vector2(X + ClientConfiguration.Instance.ToolTipMargin, Y + ClientConfiguration.Instance.ToolTipMargin),
-                UISettings.ActiveSettings.AltColor * Alpha, 1.0f);
+                ColorFromAlpha(UISettings.ActiveSettings.AltColor), 1.0f);
         }
+
+        private Color ColorFromAlpha(Color color)
+            // This is necessary because XNA lacks the color constructor that
+            // takes a color and a float value for alpha.
+#if XNA
+            => new Color(color.R, color.G, color.B, (int)(Alpha * 255.0f));
+#else
+            => new Color(color, Alpha);
+#endif
 
         private Point SumPoints(Point p1, Point p2)
             // This is also needed for XNA compatibility

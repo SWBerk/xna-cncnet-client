@@ -41,16 +41,13 @@ namespace DTAClient.Online
             Process[] processlist = Process.GetProcesses();
             foreach (Process process in processlist)
             {
-                try {
-                    if (process.ProcessName.Contains("cheatengine") ||
-                        process.MainWindowTitle.ToLower().Contains("cheat engine") ||
-                        process.MainWindowHandle.ToString().ToLower().Contains("cheat engine")
-                        )
-                    {
-                        KillGameInstance();
-                    }
+                if (process.ProcessName.Contains("cheatengine") ||
+                    process.MainWindowTitle.ToLower().Contains("cheat engine") ||
+                    process.MainWindowHandle.ToString().ToLower().Contains("cheat engine")
+                )
+                {
+                    KillGameInstance();
                 }
-                catch { }
 
                 process.Dispose();
             }
@@ -69,13 +66,10 @@ namespace DTAClient.Online
                 Process[] processlist = Process.GetProcesses();
                 foreach (Process process in processlist)
                 {
-                    try {
-                        if (process.ProcessName.Contains(gameExecutableName))
-                        {
-                            process.Kill();
-                        }
+                    if (process.ProcessName.Contains(gameExecutableName))
+                    {
+                        process.Kill();
                     }
-                    catch { }
 
                     process.Dispose();
                 }

@@ -1,6 +1,4 @@
-﻿using System;
-
-namespace DTAClient.Online
+﻿namespace DTAClient.Online
 {
     /// <summary>
     /// A queued network message.
@@ -16,23 +14,7 @@ namespace DTAClient.Online
             Command = command;
             MessageType = type;
             Priority = priority;
-            Delay = -1;
-            SendAt = DateTime.Now;
         }
-
-        public QueuedMessage(string command, QueuedMessageType type, int priority, int delay)
-        {
-            Command = command;
-            MessageType = type;
-            Priority = priority;
-            Delay = delay;
-            SendAt = DateTime.Now.AddMilliseconds(Delay);
-        }
-
-        /// <summary>
-        /// Message Queue ID
-        /// </summary>
-        public int ID { get; set; }
 
         /// <summary>
         /// The command to send to the IRC network.
@@ -48,15 +30,6 @@ namespace DTAClient.Online
         /// The priority of the message.
         /// </summary>
         public int Priority { get; set; }
-
-        /// <summary>
-        /// The amount of milliseconds to delay the message.
-        /// </summary>
-        public int Delay { get; set; } = -1;
-
-        /// <summary>
-        /// The amount of milliseconds to delay the message.
-        /// </summary>
-        public DateTime SendAt { get; set; } = DateTime.Now;
+        public string ID { get; internal set; }
     }
 }

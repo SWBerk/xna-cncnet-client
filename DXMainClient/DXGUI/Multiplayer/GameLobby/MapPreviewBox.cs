@@ -149,8 +149,6 @@ namespace DTAClient.DXGUI.Multiplayer.GameLobby
             sndDropdownSound = new EnhancedSoundEffect("dropdown.wav");
 
             base.Initialize();
-
-            ClientRectangleUpdated += (s, e) => UpdateMap();
         }
 
         private void ContextMenu_OptionSelected(int index)
@@ -345,7 +343,9 @@ namespace DTAClient.DXGUI.Multiplayer.GameLobby
 
             useNearestNeighbour = ratio < 1.0;
 
-            textureRectangle = new Rectangle(texturePositionX, texturePositionY,
+            Point windowPoint = GetWindowPoint();
+
+            textureRectangle = new Rectangle(windowPoint.X + texturePositionX, windowPoint.Y + texturePositionY,
                 textureWidth, textureHeight);
 
             List<Point> startingLocations = Map.GetStartingLocationPreviewCoords(new Point(texture.Width, texture.Height));
@@ -464,34 +464,20 @@ namespace DTAClient.DXGUI.Multiplayer.GameLobby
 
             if (texture != null)
             {
-                Point renderPoint = GetRenderPoint();
-
                 if (useNearestNeighbour)
                 {
                     Renderer.PushSettings(new SpriteBatchSettings(SpriteSortMode.Deferred, null, SamplerState.PointClamp));
-                    DrawPreviewTexture();
+                    Renderer.DrawTexture(texture, textureRectangle, Color.White);
                     Renderer.PopSettings();
                 }
                 else
-                {
-                    DrawPreviewTexture();
-                }
+                    Renderer.DrawTexture(texture, textureRectangle, Color.White);
             }
 
             if (DrawBorders)
                 DrawPanelBorders();
 
             DrawChildren(gameTime);
-        }
-
-        private void DrawPreviewTexture()
-        {
-            Point renderPoint = GetRenderPoint();
-            Renderer.DrawTexture(texture,
-                new Rectangle(renderPoint.X + textureRectangle.X,
-                renderPoint.Y + textureRectangle.Y,
-                textureRectangle.Width, textureRectangle.Height),
-                Color.White);
         }
     }
 

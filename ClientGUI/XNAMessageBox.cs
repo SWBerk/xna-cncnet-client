@@ -150,6 +150,16 @@ namespace ClientGUI
                 Height - 28, btnNo.Width, btnNo.Height);
         }
 
+        public static void Show2(object windowManager, string v, string v1)
+        {
+            throw new NotImplementedException();
+        }
+
+        public static void ShowYesNoDialog(object windowManager, string v)
+        {
+            throw new NotImplementedException();
+        }
+
         private void AddOKCancelButtons()
         {
             XNAButton btnOK = new XNAButton(WindowManager);
@@ -245,6 +255,31 @@ namespace ClientGUI
             msgBox.OKClickedAction = MsgBox_OKClicked;
             windowManager.AddAndInitializeControl(msgBox);
             windowManager.SelectedControl = null;
+        }
+        public static WindowManager wm;
+        public static void Show2(WindowManager windowManager, string caption, string description)
+        {
+            var panel = new DarkeningPanel(windowManager);
+            panel.Focused = true;
+            windowManager.AddAndInitializeControl(panel);
+
+            var msgBox = new XNAMessageBox(windowManager,
+                Renderer.GetSafeString(caption, 1),
+                Renderer.GetSafeString(description, 0),
+                XNAMessageBoxButtons.OK);
+
+            panel.AddChild(msgBox);
+            wm = windowManager;
+            msgBox.OKClickedAction = MsgBox_OKClicked2;
+            windowManager.AddAndInitializeControl(msgBox);
+            windowManager.SelectedControl = null;
+        }
+        private static void MsgBox_OKClicked2(XNAMessageBox messageBox)
+        {
+            var parent = (DarkeningPanel)messageBox.Parent;
+            parent.Hide();
+            parent.Hidden += Parent_Hidden;
+            wm.CloseGame();
         }
 
         private static void MsgBox_OKClicked(XNAMessageBox messageBox)

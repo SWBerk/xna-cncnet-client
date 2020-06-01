@@ -235,10 +235,10 @@ namespace DTAConfig.OptionPanels
                         cc.GUIName));
                 }
 
-                btn.Text = "Install (" + GetSizeString(cc.RemoteSize) + ")";
+                btn.Text = "Install";
 
                 if (File.Exists(ProgramConstants.GamePath + cc.LocalPath))
-                    btn.Text = "Update (" + GetSizeString(cc.RemoteSize) + ")";
+                    btn.Text = "Update";
             }
             else
             {

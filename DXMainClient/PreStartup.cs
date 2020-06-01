@@ -58,7 +58,7 @@ namespace DTAClient
 
             MainClientConstants.Initialize();
 
-            Logger.Log("***Logfile for " + MainClientConstants.GAME_NAME_LONG + " client***");
+            Logger.Log("***Logfile for Dune2K client***");
             Logger.Log("Client version: " + Application.ProductVersion);
 
             // Log information about given startup params
@@ -88,7 +88,7 @@ namespace DTAClient
                     "applications that could be using the file, and then start the client again."
                     + Environment.NewLine + Environment.NewLine +
                     "Message: " + ex.Message,
-                    "CnCNet Client");
+                    "Dune2K Client");
                 Environment.Exit(0);
             }
 
@@ -101,7 +101,7 @@ namespace DTAClient
         {
             Exception ex = (Exception)e.ExceptionObject;
 
-            Logger.Log("KABOOOOOOM!!! Info:");
+            Logger.Log("Dune2K!!! Info:");
             Logger.Log("Message: " + ex.Message);
             Logger.Log("Source: " + ex.Source);
             Logger.Log("TargetSite.Name: " + ex.TargetSite.Name);
@@ -120,19 +120,19 @@ namespace DTAClient
                     DateTime dtn = DateTime.Now;
 
                     File.Copy(Environment.CurrentDirectory + "\\Client\\client.log",
-                        Environment.CurrentDirectory + string.Format("\\Client\\ErrorLogs\\ClientCrashLog_{0}_{1}_{2}_{3}_{4}.txt",
+                        Environment.CurrentDirectory + string.Format("\\Client\\ErrorLogs\\ClientCrashLog.txt",
                         dtn.Day, dtn.Month, dtn.Year, dtn.Hour, dtn.Minute), true);
                 }
             }
             catch { }
 
-            MessageBox.Show(string.Format("{0} has crashed. Error message:" + Environment.NewLine + Environment.NewLine +
+            MessageBox.Show(string.Format("Dune2K has crashed. Error message:" + Environment.NewLine + Environment.NewLine +
                 ex.Message + Environment.NewLine + Environment.NewLine +
-                "If the issue is repeatable, contact the {1} staff at {2}.",
+                "If the issue is repeatable, contact the Dune2K staff at https://discord.gg/7pARsHR.",
                 MainClientConstants.GAME_NAME_LONG,
                 MainClientConstants.GAME_NAME_SHORT,
                 MainClientConstants.SUPPORT_URL_SHORT),
-                "KABOOOOOOOM", MessageBoxButtons.OK);
+                "Dune2K_Bot", MessageBoxButtons.OK);
         }
 
         private static void CheckPermissions()
