@@ -139,7 +139,7 @@ namespace DTAClient.Online
             UserListReceived?.Invoke(this, EventArgs.Empty);
         }
 
-        public void OnUserKicked(string userName, string kickReason)
+        public void OnUserKicked(string userName, string kickReason, string kickSender)
         {
             int index = users.FindIndex(u => u.IRCUser.Name == userName);
 
@@ -157,7 +157,7 @@ namespace DTAClient.Online
                 users.RemoveAt(index);
             }
 
-            AddMessage(new ChatMessage(userName + " has been kicked  from " + UIName + ". " + "(" + kickReason + ")"));
+            AddMessage(new ChatMessage(kickSender + " has kicked " + userName + "   from " + UIName + ". " ));
 
 
             UserKicked?.Invoke(this, new UserNameIndexEventArgs(index, userName));
