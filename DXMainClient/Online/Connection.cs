@@ -564,12 +564,13 @@ namespace DTAClient.Online
                         connectionManager.OnChannelModesChanged(modeUserName, modeChannelName, modeString, modeParameters);
                         break;
                     case "KICK":
+                        string kickSender = prefix.Substring(0, prefix.IndexOf('!'));
                         string kickChannelName = parameters[0];
                         string kickUserName = parameters[1];
                         string kickReason = parameters.Count > 2
                             ? parameters[2]
                             : null;
-                        connectionManager.OnUserKicked(kickChannelName, kickUserName, kickReason);
+                        connectionManager.OnUserKicked(kickSender, kickChannelName, kickUserName, kickReason);
                         break;
                     case "ERROR":
                         connectionManager.OnErrorReceived(message);

@@ -665,14 +665,14 @@ namespace DTAClient.Online
             UserAdded?.Invoke(this, new UserEventArgs(user));
         }
 
-        public void OnUserKicked(string channelName, string userName, string kickReason)
+        public void OnUserKicked(string kickSender, string channelName, string userName, string kickReason)
         {
-            wm.AddCallback(new Action<string, string, string>(DoUserKicked),
-                channelName, userName, kickReason);
+            wm.AddCallback(new Action<string, string, string, string>(DoUserKicked),
+                kickSender, channelName, userName, kickReason);
             SoundPlayer.Play(sndGameCreated);
         }
 
-        private void DoUserKicked(string channelName, string userName, string kickReason)
+        private void DoUserKicked(string kickSender, string channelName, string userName, string kickReason)
         {
             
             Channel channel = FindChannel(channelName);
@@ -681,11 +681,11 @@ namespace DTAClient.Online
                 return;
 
            
-            channel.OnUserKicked(userName, kickReason);
+            channel.OnUserKicked(userName, kickReason, kickSender);
 
             if (userName == ProgramConstants.PLAYERNAME)
             {
-                XNAMessageBox.Show2(wm, "Error ", "You have been Kicked! " + "(" + kickReason + ")");
+                XNAMessageBox.Show2(wm, "Error ", "You have been Kicked by " + kickSender + "! " + "(" + kickReason + ")");
                 foreach (ChannelUser user in channel.Users)
                 {
                     
