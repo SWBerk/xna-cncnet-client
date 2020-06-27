@@ -203,7 +203,7 @@ namespace DTAClient.Online
                             tcpClient = client;
                             var netStream = tcpClient.GetStream();
                             if (server.UseSsl)
-                                serverStream = GetWrappedSslStream(server.Host, netStream, server.SslProtocols);
+                                serverStream = GetWrappedSslStream(server.Host, netStream);
                             else
                                 serverStream = netStream;
                             serverStream.ReadTimeout = 1000;
@@ -227,7 +227,7 @@ namespace DTAClient.Online
             connectionManager.OnConnectAttemptFailed();
         }
 
-        private SslStream GetWrappedSslStream(string hostname, NetworkStream networkStream, SslProtocols? protocols)
+        private SslStream GetWrappedSslStream(string hostname, NetworkStream networkStream)
         {
             var certValidation = ServicePointManager.ServerCertificateValidationCallback;
             if (certValidation is null)
@@ -256,15 +256,7 @@ namespace DTAClient.Online
                 selectionCallback);
             try
             {
-                if (protocols.HasValue)
-                    sslStream.AuthenticateAsClient(hostname,
-                        clientCertificates: null,
-                        enabledSslProtocols: protocols.Value,
-                        checkCertificateRevocation: true);
-                else
-                    sslStream.AuthenticateAsClient(hostname, 
-                        clientCertificates: null,
-                        checkCertificateRevocation: true);
+                sslStream.AuthenticateAsClient(hostname);
             }
             catch (IOException)
             {
