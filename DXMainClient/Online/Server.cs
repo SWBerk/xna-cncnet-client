@@ -1,4 +1,6 @@
-﻿namespace DTAClient.Online
+﻿using System.Security.Authentication;
+
+namespace DTAClient.Online
 {
     /// <summary>
     /// A struct containing information on an IRC server.
